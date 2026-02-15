@@ -21,7 +21,7 @@ El objetivo de este proyecto es desarrollar el método de Otsu aplicado a un ras
 - Preparar los datos satelitales mediante corrección radiométrica, pan-sharpening y cálculo del NDVI.
 - Discretizar el NDVI en niveles de intensidad y analizar su distribución mediante histogramas.
 - Implementar el método de Otsu de forma manual para determinar el umbral óptimo.
-- Evaluar la influencia del rango de reescalamiento (mín–máx de la escena vs rango teórico [−1,1]) en el valor del umbral.
+- Evaluar la influencia del rango de reescalamiento (mín–máx de la escena vs rango teórico [−1, 1]) en el cálculo del umbral.
 - Analizar la equivalencia entre los criterios de maximización de la varianza interclase, minimización de la varianza intraclase y el criterio discriminante de Fisher.
 
 ---

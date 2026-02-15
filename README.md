@@ -28,16 +28,16 @@ El objetivo de este proyecto es desarrollar el método de Otsu aplicado a un ras
 
 🧪 **Archivo principal**
 
----
-
 📓 Markdown:
 
 ---
 
 📊 **Gráfico generado**  
 
+La figura presentada compara el histograma de intensidades NDVI discretizadas y las funciones objetivo del método de Otsu (σ²_B, σ²_W y criterio de Fisher). El umbral óptimo 𝑡∗ se identifica en el máximo de σ²_B y del criterio de Fisher, y en el mínimo de σ²_W, mostrando la equivalencia entre los criterios de optimización.
+
 <div style="text-align: center;">
-  <img src="grafico.png" width="100%" />
+  <img src="grafico.png" width="90%" />
 </div>
 
 ---

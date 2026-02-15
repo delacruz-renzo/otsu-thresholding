@@ -16,7 +16,7 @@ El objetivo de este proyecto es desarrollar el método de Otsu aplicado a un ras
 
 ---
 
-📌 **Objetivos del Análisis**
+📌 **Objetivos del análisis**
 
 - Preparar los datos satelitales mediante corrección radiométrica, pan-sharpening y cálculo del NDVI.
 - Discretizar el NDVI en niveles de intensidad y analizar su distribución mediante histogramas.

@@ -1,6 +1,6 @@
 # Umbralización de Otsu (Otsu’s thresholding)
 
-![R](https://img.shields.io/badge/R-4.x-blue?logo=r) ![terra](https://img.shields.io/badge/terra-raster-green) ![sf](https://img.shields.io/badge/sf-geometr%C3%ADa%20vectorial-brightgreen) ![RStoolbox](https://img.shields.io/badge/RStoolbox-Remote%20Sensing-orange) ![ggplot2](https://img.shields.io/badge/ggplot2-visualizaci%C3%B3n-blueviolet) ![EBImage](https://img.shields.io/badge/EBImage-Image%20Processing-yellow)
+![R](https://img.shields.io/badge/R-4.4.1-blue?logo=r) ![terra](https://img.shields.io/badge/terra-1.8.60-green) ![sf](https://img.shields.io/badge/sf-1.0.16-brightgreen) ![RStoolbox](https://img.shields.io/badge/RStoolbox-0.3.1-orange) ![ggplot2](https://img.shields.io/badge/ggplot2-3.5.1-blueviolet) ![EBImage](https://img.shields.io/badge/EBImage-4.40.0-yellow)
 
 **Autor**: Renzo Angel De La Cruz Gonzales
 
@@ -17,11 +17,24 @@ El objetivo de este proyecto es desarrollar el método de Otsu aplicado a un ras
 
 ---
 
+🧪 **Archivo principal**
+
+📓 Markdown:
+
+---
+
 📊 **Gráfico generado**  
 
-<div style="display: flex; justify-content: space-around;">
-  <img src="grafico.png" width="45%" />
+<div style="text-align: center;">
+  <img src="grafico.png" width="80%" />
 </div>
+
+---
+
+💬 **Notas adicionales**
+
+- Proyecto orientado a teledetección y segmentación de imágenes, con implementación paso a paso del método de Otsu aplicado a NDVI.
+- Se incluye una implementación manual del algoritmo y una comparación con *EBImage* para validar resultados.
 
 ---
 

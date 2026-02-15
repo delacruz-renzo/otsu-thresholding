@@ -1,0 +1,464 @@
+---
+title: "Umbralización de Otsu (Otsu’s thresholding)"
+author: "Renzo Angel De La Cruz Gonzales"
+---
+
+Correo electrónico: renzoangeldelacruz@gmail.com  
+GitHub: https://github.com/delacruz-renzo  
+LinkedIn: https://www.linkedin.com/in/renzo-delacruz/
+
+# Definir el directorio de trabajo del proyecto.
+library(sf)
+library(sp)
+library(leaflet)
+library(mapview)
+setwd("d:/Lenovo/Desktop/GEO/PROJECT_16")
+# Importar el archivo shapefile del área de estudio.
+limHumedal <- read_sf("shp/aoi_humedal.shp")
+# Visualizar el área de estudio.
+mapview::mapview(limHumedal, layer.name = "Área de Estudio", alpha.regions = 0, color = "blue", 
+                 lwd = 2, map.types = c("Esri.WorldImagery"))
+# Obtener la lista de archivos raster multiespectrales en formato .tif.
+library(raster)
+library(terra)
+CBERS_4A_files <- sort(list.files(path = "raster/MS", pattern = "\\.tif$", full.names = TRUE))
+# Crear un raster multibanda a partir de los archivos individuales.
+CBERS_4A_MS <- rast(CBERS_4A_files)
+CBERS_4A_MS
+# Asignar nombres a las bandas del raster multiespectral.
+names(CBERS_4A_MS) <- c("CBERS4A_BAND1", "CBERS4A_BAND2", "CBERS4A_BAND3", "CBERS4A_BAND4")
+# Recortar el raster multibanda al límite del área de estudio.
+CBERS_4A_MS <- terra::crop(CBERS_4A_MS, limHumedal)
+CBERS_4A_MS <- terra::mask(CBERS_4A_MS, limHumedal)
+# Visualizar las bandas multiespectrales resultantes.
+plot(CBERS_4A_MS)
+# Importar la banda pancromática.
+CBERS_4A_PAN <- rast("raster/PAN/CBERS_4A_WPM_20230319_245_128_L4_BAND0.tif")
+CBERS_4A_PAN
+# Asignar nombre a la banda pancromática.
+names(CBERS_4A_PAN) <- c("CBERS4A_BAND0")
+# Recortar la banda pancromática al límite del área de estudio.
+CBERS_4A_PAN <- terra::crop(CBERS_4A_PAN, limHumedal)
+CBERS_4A_PAN <- terra::mask(CBERS_4A_PAN, limHumedal)
+# Visualizar la banda pancromática en escala de grises.
+plot(CBERS_4A_PAN, col = gray.colors(256, start = 0, end = 1))
+# Definir coeficientes de conversión a radiancia por banda.
+coef_rad <- c(CBERS4A_BAND0 = 0.184471, CBERS4A_BAND1 = 0.29107, CBERS4A_BAND2 = 0.297832,
+              CBERS4A_BAND3 = 0.232504, CBERS4A_BAND4 = 0.178993)
+# Aplicar corrección radiométrica a bandas multiespectrales.
+bandas_MS <- CBERS_4A_MS * coef_rad[names(CBERS_4A_MS)]
+# Visualizar las bandas multiespectrales con valores de radiancia calibrados.
+plot(bandas_MS)
+# Aplicar la corrección radiométrica a la banda pancromática.
+banda_PAN <- CBERS_4A_PAN * coef_rad[names(CBERS_4A_PAN)]
+# Visualizar la banda pancromática con valores de radiancia calibrados.
+plot(banda_PAN, col = gray.colors(256, start = 0, end = 1))
+# Visualizar la composición en color natural (RGB: Red, Green y Blue).
+plotRGB(bandas_MS, r = 3, g = 2, b = 1, axes = TRUE, box = TRUE, stretch = "lin")
+# Visualizar la composición en falso color infrarrojo (NIR, Red y Green).
+plotRGB(bandas_MS, r = 4, g = 3, b = 2, axes = TRUE, box = TRUE, stretch = "lin")
+# Aplicar Pan-Sharpening a la composición en falso color infrarrojo.
+library(RStoolbox)
+imagen_fusion <- RStoolbox::panSharpen(bandas_MS, banda_PAN, r = 4, g = 3, b = 2, method = "brovey")
+imagen_fusion
+# Visualizar la imagen fusionada con mayor resolución espacial.
+plotRGB(imagen_fusion, r = 3, g = 2, b = 1, axes = TRUE, box = TRUE, stretch = "lin")
+# Extraer las bandas del infrarrojo cercano (NIR) y del rojo (Red) desde la imagen fusionada.
+NIR <- imagen_fusion["CBERS4A_BAND4_pan"]
+Red <- imagen_fusion["CBERS4A_BAND3_pan"]
+# Calcular el Índice de Vegetación de Diferencia Normalizada (NDVI).
+NDVI <- (NIR - Red)/(NIR + Red)
+# Visualizar el NDVI.
+plot(NDVI, main = "NDVI", col = colorRampPalette(c("red", "yellow", "green"))(255))
+# Convertir el raster NDVI a un data frame para su análisis estadístico.
+library(ggplot2)
+NDVI_df <- as.data.frame(NDVI)
+colnames(NDVI_df) <- "NDVI"
+# Calcular métricas descriptivas del NDVI (media y mediana).
+media_NDVI   <- mean(NDVI_df$NDVI, na.rm = TRUE)
+mediana_NDVI <- median(NDVI_df$NDVI, na.rm = TRUE)
+# Graficar el histograma de la distribución de valores NDVI.
+ggplot(NDVI_df, aes(x = NDVI)) +
+  geom_histogram(aes(fill = after_stat(x)), color = "white", linewidth = 0.1, bins = 30) +
+  scale_fill_gradient(low = "#e5f5e0", high = "#006d2c") +
+  geom_vline(xintercept = media_NDVI, color = "red", linewidth = 0.7, linetype = "dashed") +
+  geom_vline(xintercept = mediana_NDVI, color = "blue", linewidth = 0.7, linetype = "dashed") +
+  theme_grey(base_size = 9) +
+  annotate("text", x = media_NDVI, y = 3.5e4, label = "Media", color = "red", angle = 90, vjust = -0.5, 
+           size = 3.4) +
+  annotate("text", x = mediana_NDVI, y = 3.5e4, label = "Mediana", color = "blue", angle = 90, vjust = -0.5, 
+           size = 3.4) +
+  labs(title = "Histograma de valores NDVI", x = "NDVI", y = "Frecuencia") +
+  scale_x_continuous(breaks = seq(-1, 1, by = 0.2)) +
+  scale_y_continuous(labels = scales::scientific) +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 9.5), legend.position = "none")
+# Definir función para cálcular el umbral óptimo según el método de Otsu.
+otsu_threshold <- function(x_rast, L = 256, range = NULL, eps = 1e-10) {
+  # Verificar que la entrada sea un objeto "SpatRaster" (paquete "terra").
+  if (!inherits(x_rast, "SpatRaster")) {x_rast <- terra::rast(x_rast)}
+  # Asegurar que el número de niveles de intensidades ("L") sea entero válido.
+  if (length(L) != 1 || !is.finite(L)) stop("L debe ser un único valor numérico finito.")
+  L <- as.integer(L)
+  if (L < 2) stop("L debe ser un entero >= 2.")
+  # Definir el rango de los valores (ignorando NA).
+  if (is.null(range)) {
+    r_min <- terra::global(x_rast, "min", na.rm = TRUE)[1, 1]
+    r_max <- terra::global(x_rast, "max", na.rm = TRUE)[1, 1]
+  } else {
+    stopifnot(length(range) == 2)
+    r_min <- as.numeric(range[1])
+    r_max <- as.numeric(range[2])
+  }
+  # Validaciones del rango.
+  if (!is.finite(r_min) || !is.finite(r_max)) {
+    stop("El rango contiene valores no finitos (NA/Inf).")
+  }
+  if (r_max <= r_min) {
+    stop("Rango degenerado: r_max <= r_min. Otsu no es informativo.")
+  }
+  # Reescalamiento lineal a niveles discretos [0, L-1] (por defecto 8 bits: [0, 255]).
+  rast_nbits <- round((x_rast - r_min) / (r_max - r_min) * (L - 1))
+  # Acotar los valores al rango válido ante ruido o errores numéricos.
+  rast_nbits <- terra::clamp(rast_nbits, lower = 0, upper = L - 1, values = TRUE)
+  # Extraer los valores del raster como vector numérico.
+  vals_nbits <- terra::values(rast_nbits, mat = FALSE)
+  # Eliminar valores faltantes (NA) y no validos.
+  vals_nbits <- vals_nbits[is.finite(vals_nbits)]
+  if (length(vals_nbits) == 0) {
+    stop("No hay píxeles válidos para calcular el histograma.")
+  }
+  # Construcción del histograma.
+  h <- tabulate(vals_nbits + 1, nbins = L) 
+  # Número total de píxeles válidos.
+  N <- sum(h)
+  # Distribución de probabilidad empírica.
+  P <- h / N
+  # Niveles de intensidad discretos.
+  i <- 0:(L - 1)
+  # Probabilidad de la clase C0.
+  omega0 <- cumsum(P)
+  # Probabilidad de la clase C1.
+  omega1 <- 1 - omega0
+  # Media global.
+  muT <- sum(i * P)
+  # Media de la clase C0.
+  mu0 <- cumsum(i * P) / pmax(omega0, eps)
+  # Media de la clase C1.
+  mu1 <- (muT - cumsum(i * P)) / pmax(omega1, eps)
+  # Varianza interclase, según el criterio de maximización del método de Otsu.
+  sigma_b2 <- omega0 * omega1 * (mu0 - mu1)^2
+  sigma_b2[omega0 < eps | omega1 < eps] <- -Inf
+  # Umbral óptimo.
+  threshold_bits <- which.max(sigma_b2) - 1
+  # Reconversión del umbral a la escala original.
+  threshold_scaled <- r_min + (threshold_bits / (L - 1)) * (r_max - r_min)
+  # Salida.
+  return(list(
+    threshold_scaled = threshold_scaled,
+    threshold_bits   = threshold_bits,
+    sigma_b2         = sigma_b2,
+    levels           = i,
+    range_used       = c(r_min, r_max)
+  ))
+}
+# Calcular el umbral de Otsu para el raster NDVI.
+otsu_ndvi <- otsu_threshold(NDVI)
+cat("Umbral óptimo de Otsu (t*) en niveles discretos:", otsu_ndvi$threshold_bits, "\n")
+cat("Umbral óptimo de Otsu (t*) en escala original:", otsu_ndvi$threshold_scaled, "\n")
+cat("Rango utilizado para cálcular el umbral óptimo de Otsu (t*):", otsu_ndvi$range_used, "\n")
+# Graficar el histograma de NDVI y el umbral estimado por Otsu.
+threshold_otsu_NDVI <- otsu_ndvi$threshold_scaled
+ggplot(NDVI_df, aes(x = NDVI)) +
+  geom_histogram(aes(fill = after_stat(x)), color = "white", linewidth = 0.1, bins = 30) +
+  scale_fill_gradient(low = "#e5f5e0", high = "#006d2c") +
+  geom_vline(xintercept = media_NDVI, color = "red", linewidth = 0.7, linetype = "dashed") +
+  geom_vline(xintercept = mediana_NDVI, color = "blue", linewidth = 0.7, linetype = "dashed") +
+  geom_vline(xintercept = threshold_otsu_NDVI, color = "black", linewidth = 0.7, linetype = "dashed") +
+  theme_grey(base_size = 9) +
+  annotate("text", x = media_NDVI, y = 3.5e4, label = "Media", color = "red", angle = 90, vjust = -0.5, 
+           size = 3.4) +
+  annotate("text", x = mediana_NDVI, y = 3.5e4, label = "Mediana", color = "blue", angle = 90, vjust = -0.5, 
+           size = 3.4) +
+  annotate("text", x = threshold_otsu_NDVI, y = 3.5e4, label = "Otsu (t*)", color = "black", angle = 90, vjust = -0.5, 
+           size = 3.4) +
+  labs(title = "Histograma de valores NDVI", x = "NDVI", y = "Frecuencia") +
+  scale_x_continuous(breaks = seq(-1, 1, by = 0.2)) +
+  scale_y_continuous(labels = scales::scientific) +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 9.5), legend.position = "none")
+# Binarizar el NDVI con el umbral calculado mediante el método de Otsu.
+mask_otsu <- NDVI > threshold_otsu_NDVI
+# Aplicar un filtro espacial mayoritario (modal) para suavizar el ruido.
+w <- matrix(1, 5, 5)
+mask_otsu <- focal(mask_otsu, w, fun = modal, na.rm = TRUE)
+# Visualizar la comparación entre el NDVI y la segmentación binaria obtenida con Otsu.
+mapview::mapview(NDVI,
+                 layer.name = "NDVI",
+                 col.regions = c("red", "yellow", "green"),
+                 map.types = "Esri.WorldImagery",
+                 legend = FALSE) +
+  mapview::mapview(mask_otsu,
+                   layer.name = "Otsu",
+                   col.regions = c("gray90", "darkgreen"),
+                   legend = FALSE)
+# Guardar el umbral óptimo de Otsu en niveles discretos (0–255).
+library(dplyr)
+threshold_bits_NDVI <- otsu_ndvi$threshold_bits
+# Reescalar linealmente el NDVI a niveles discretos para análisis por intensidades.
+NDVI_df <- NDVI_df %>%
+  mutate(NDVI_bits = round((NDVI - min(NDVI)) / (max(NDVI) - min(NDVI)) * (256 - 1))) %>%
+  # Etiquetar clases binarias según el umbral de Otsu.
+  mutate(class = ifelse(NDVI_bits <= threshold_bits_NDVI, "0", "1")) %>%
+  # Contar píxeles por nivel de intensidad y clase.
+  count(NDVI_bits, class, name = "count")
+# Reescalar la varianza interclase para superponerla sobre el histograma de conteos.
+scale_factor  <- as.numeric(max(NDVI_df$count, na.rm = TRUE) / max(otsu_ndvi$sigma_b2, na.rm = TRUE))
+varInterclases_plot <- data.frame(
+  level = otsu_ndvi$levels[is.finite(otsu_ndvi$sigma_b2)],
+  sigma = otsu_ndvi$sigma_b2[is.finite(otsu_ndvi$sigma_b2)] * scale_factor)
+# Identificar el punto de corte (t*) y su σ_b^2 correspondiente en la curva de varianza interclase.
+point_otsu <- varInterclases_plot %>%
+  slice_min(abs(level - threshold_bits_NDVI), n = 1, with_ties = FALSE) %>%
+  select(level, sigma)
+# Graficar el histograma de intensidades y la curva de varianza interclase.
+ggplot() +
+  geom_col(data = NDVI_df, aes(x = NDVI_bits, y = count, fill = class), color = "NA", width = 1) +
+  geom_line(data = varInterclases_plot, aes(x = level, y = sigma), color = "red", linewidth = 0.9, alpha = 0.7) +
+  geom_vline(xintercept = threshold_bits_NDVI, color = "black", linewidth = 0.7, linetype = "dashed") +
+  geom_point(data = point_otsu, aes(x = level, y = sigma), color = "red", size = 3) +
+    theme_minimal(base_size = 9) +
+  scale_fill_manual(values = c("0" = "gray65", "1" = "#006d2c")) +
+  scale_x_continuous(breaks = seq(0, 255, by = 50)) +
+  scale_y_continuous(name = "Conteo de Píxeles", labels = scales::scientific, breaks = seq(0, 1e4, by = 2.38e3),
+                     sec.axis = sec_axis(~ . / scale_factor, name = "Varianza Interclase")) +
+  annotate("text", x = threshold_bits_NDVI, y = 4.6e3, label = "Otsu (t*)", color = "grey10", angle = 90, 
+           vjust = -0.5, size = 3.4) +
+  labs(x = "Intensidad NDVI (bins 0–255)", 
+       title = "Histograma de intensidades NDVI y varianza interclase") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 9.5),
+        panel.grid.minor = element_blank(), legend.position = "none")
+# Calcular el umbral de Otsu para el raster NDVI utilizando el rango teórico [-1, 1].
+otsu_ndvi2 <- otsu_threshold(NDVI, range = c(-1, 1))
+cat("Umbral óptimo de Otsu (t*) utilizando rango teórico, en niveles discretos:", 
+    otsu_ndvi2$threshold_bits, "\n")
+cat("Umbral óptimo de Otsu (t*) utilizando rango teórico, en escala original:", 
+    otsu_ndvi2$threshold_scaled, "\n")
+# Convertir el raster NDVI a una matriz para su procesamiento con EBImage.
+library(BiocManager)
+library(EBImage)
+NDVI_array <- as.array(NDVI)
+# Calcular el umbral óptimo de Otsu utilizando la implementación del paquete EBImage.
+otsu_ndvi3 <- otsu(x = NDVI_array, range = c(-1, 1), levels = 256)
+cat("Umbral óptimo de Otsu (t*) cálculado mediante el paquete EBImage:", otsu_ndvi3, "\n")
+# Definir función para cálcular el umbral óptimo según el método de Otsu.
+# (Ahora usando el criterio equivalente: MINIMIZAR la varianza intraclase).
+otsu_threshold_min <- function(x_rast, L = 256, range = NULL, eps = 1e-10) {
+  # Verificar que la entrada sea un objeto "SpatRaster" (paquete "terra").
+  if (!inherits(x_rast, "SpatRaster")) {x_rast <- terra::rast(x_rast)}
+  # Asegurar que el número de niveles de intensidades ("L") sea entero válido.
+  if (length(L) != 1 || !is.finite(L)) stop("L debe ser un único valor numérico finito.")
+  L <- as.integer(L)
+  if (L < 2) stop("L debe ser un entero >= 2.")
+  # Definir el rango de los valores (ignorando NA).
+  if (is.null(range)) {
+    r_min <- terra::global(x_rast, "min", na.rm = TRUE)[1, 1]
+    r_max <- terra::global(x_rast, "max", na.rm = TRUE)[1, 1]
+  } else {
+    stopifnot(length(range) == 2)
+    r_min <- as.numeric(range[1])
+    r_max <- as.numeric(range[2])
+  }
+  # Validaciones del rango.
+  if (!is.finite(r_min) || !is.finite(r_max)) {
+    stop("El rango contiene valores no finitos (NA/Inf).")
+  }
+  if (r_max <= r_min) {
+    stop("Rango degenerado: r_max <= r_min. Otsu no es informativo.")
+  }
+  # Reescalamiento lineal a niveles discretos [0, L-1] (por defecto 8 bits: [0, 255]).
+  rast_nbits <- round((x_rast - r_min) / (r_max - r_min) * (L - 1))
+  # Acotar los valores al rango válido ante ruido o errores numéricos.
+  rast_nbits <- terra::clamp(rast_nbits, lower = 0, upper = L - 1, values = TRUE)
+  # Extraer los valores del raster como vector numérico.
+  vals_nbits <- terra::values(rast_nbits, mat = FALSE)
+  # Eliminar valores faltantes (NA) y no validos.
+  vals_nbits <- vals_nbits[is.finite(vals_nbits)]
+  if (length(vals_nbits) == 0) {
+    stop("No hay píxeles válidos para calcular el histograma.")
+  }
+  # Construcción del histograma.
+  h <- tabulate(vals_nbits + 1, nbins = L) 
+  # Número total de píxeles válidos.
+  N <- sum(h)
+  # Distribución de probabilidad empírica.
+  P <- h / N
+  # Niveles de intensidad discretos.
+  i <- 0:(L - 1)
+  # Probabilidad de la clase C0.
+  omega0 <- cumsum(P)
+  # Probabilidad de la clase C1.
+  omega1 <- 1 - omega0
+  # Sumas acumuladas de primer y segundo momento.
+  cum_ip  <- cumsum(i * P)
+  cum_i2p <- cumsum((i^2) * P)
+  # Medias por clase.
+  mu0 <- cum_ip / pmax(omega0, eps)
+  muT <- sum(i * P)
+  mu1 <- (muT - cum_ip) / pmax(omega1, eps)
+  # Segundo momento condicional por clase.
+  Ei2_total <- sum((i^2) * P)
+  E2_0 <- cum_i2p / pmax(omega0, eps)
+  E2_1 <- (Ei2_total - cum_i2p) / pmax(omega1, eps)
+  # Varianzas por clase.
+  sigma0_2 <- E2_0 - mu0^2
+  sigma1_2 <- E2_1 - mu1^2
+  # Varianza intraclase.
+  sigma_w2 <- omega0 * sigma0_2 + omega1 * sigma1_2
+  sigma_w2[omega0 < eps | omega1 < eps] <- Inf
+  # Umbral óptimo (minimiza varianza intraclase).
+  threshold_bits <- which.min(sigma_w2) - 1
+  # Reconversión del umbral a la escala original.
+  threshold_scaled <- r_min + (threshold_bits / (L - 1)) * (r_max - r_min)
+  # Salida.
+  return(list(
+    threshold_scaled = threshold_scaled,
+    threshold_bits   = threshold_bits,
+    sigma_w2         = sigma_w2,
+    levels           = i,
+    range_used       = c(r_min, r_max)
+  ))
+}
+# Calcular el umbral de Otsu minimizando la varianza intraclase.
+otsu_min_ndvi <- otsu_threshold_min(NDVI)
+cat("Umbral óptimo por varianza intraclase:", otsu_min_ndvi$threshold_scaled, "\n")
+cat("Umbral óptimo por varianza interclase:", otsu_ndvi$threshold_scaled, "\n")
+# Definir función para cálcular el umbral óptimo según el método de Otsu.
+# (Ahora usando el criterio equivalente: MAXIMIZAR el criterio discriminante de Fisher).
+otsu_threshold_fisher <- function(x_rast, L = 256, range = NULL, eps = 1e-10) {
+  # Verificar que la entrada sea un objeto "SpatRaster" (paquete "terra").
+  if (!inherits(x_rast, "SpatRaster")) {x_rast <- terra::rast(x_rast)}
+  # Asegurar que el número de niveles de intensidades ("L") sea entero válido.
+  if (length(L) != 1 || !is.finite(L)) stop("L debe ser un único valor numérico finito.")
+  L <- as.integer(L)
+  if (L < 2) stop("L debe ser un entero >= 2.")
+  # Definir el rango de los valores (ignorando NA).
+  if (is.null(range)) {
+    r_min <- terra::global(x_rast, "min", na.rm = TRUE)[1, 1]
+    r_max <- terra::global(x_rast, "max", na.rm = TRUE)[1, 1]
+  } else {
+    stopifnot(length(range) == 2)
+    r_min <- as.numeric(range[1])
+    r_max <- as.numeric(range[2])
+  }
+  # Validaciones del rango.
+  if (!is.finite(r_min) || !is.finite(r_max)) stop("El rango contiene valores no finitos (NA/Inf).")
+  if (r_max <= r_min) stop("Rango degenerado: r_max <= r_min. Otsu no es informativo.")
+  # Reescalamiento lineal a niveles discretos [0, L-1].
+  rast_nbits <- round((x_rast - r_min) / (r_max - r_min) * (L - 1))
+  rast_nbits <- terra::clamp(rast_nbits, lower = 0, upper = L - 1, values = TRUE)
+  # Extraer valores.
+  vals_nbits <- terra::values(rast_nbits, mat = FALSE)
+  vals_nbits <- vals_nbits[is.finite(vals_nbits)]
+  if (length(vals_nbits) == 0) stop("No hay píxeles válidos para calcular el histograma.")
+  # Histograma.
+  h <- tabulate(vals_nbits + 1, nbins = L)
+  N <- sum(h)
+  P <- h / N
+  # Niveles de intensidad.
+  i <- 0:(L - 1)
+  # Probabilidades por clase.
+  omega0 <- cumsum(P)
+  omega1 <- 1 - omega0
+  # Sumas acumuladas de primer y segundo momento.
+  cum_ip  <- cumsum(i * P)
+  cum_i2p <- cumsum((i^2) * P)
+  # Medias por clase.
+  mu0 <- cum_ip / pmax(omega0, eps)
+  muT <- sum(i * P)
+  mu1 <- (muT - cum_ip) / pmax(omega1, eps)
+  # Segundo momento condicional por clase.
+  Ei2_total <- sum((i^2) * P)
+  E2_0 <- cum_i2p / pmax(omega0, eps)
+  E2_1 <- (Ei2_total - cum_i2p) / pmax(omega1, eps)
+  # Varianzas por clase.
+  sigma0_2 <- E2_0 - mu0^2
+  sigma1_2 <- E2_1 - mu1^2
+  # Varianza intraclase.
+  sigma_w2 <- omega0 * sigma0_2 + omega1 * sigma1_2
+  sigma_w2[omega0 < eps | omega1 < eps] <- NA_real_
+  # Varianza interclase.
+  sigma_b2 <- omega0 * omega1 * (mu0 - mu1)^2
+  sigma_b2[omega0 < eps | omega1 < eps] <- NA_real_
+  # Criterio de Fisher.
+  J <- sigma_b2 / pmax(sigma_w2, eps)
+  # Umbral óptimo (maximiza J).
+  threshold_bits <- which.max(J) - 1
+  # Reconversión del umbral a la escala original.
+  threshold_scaled <- r_min + (threshold_bits / (L - 1)) * (r_max - r_min)
+  # Salida.
+  return(list(
+    threshold_scaled = threshold_scaled,
+    threshold_bits   = threshold_bits,
+    J_fisher         = J,
+    sigma_w2         = sigma_w2,
+    sigma_b2         = sigma_b2,
+    levels           = i,
+    range_used       = c(r_min, r_max)
+  ))
+}
+# Calcular el umbral de Otsu maximizando el criterio discriminante de Fisher (J).
+otsu_fisher_ndvi <- otsu_threshold_fisher(NDVI)
+cat("Umbral óptimo por varianza interclase:", otsu_ndvi$threshold_scaled, "\n")
+cat("Umbral óptimo por varianza intraclase:", otsu_min_ndvi$threshold_scaled, "\n")
+cat("Umbral óptimo por criterio de Fisher:", otsu_fisher_ndvi$threshold_scaled, "\n")
+# Convertir el raster NDVI a un data frame para análisis por intensidades.
+NDVI_df2 <- as.data.frame(NDVI)
+# Renombrar la columna que contiene los valores de NDVI.
+colnames(NDVI_df2) <- "NDVI"
+# Reescalar linealmente los valores de NDVI a niveles discretos [0, 255].
+NDVI_df2 <- NDVI_df2 %>%
+  mutate(NDVI_bits = round((NDVI - min(NDVI)) / (max(NDVI) - min(NDVI)) * (256 - 1))) %>%
+  # Construir el histograma: conteo de píxeles por nivel de intensidad (bin).
+  count(NDVI_bits, name = "count") %>%
+  # Normalizar el histograma para compararlo con funciones objetivo normalizadas.
+  mutate(count_norm = count / max(count, na.rm = TRUE))
+# Normalizar las funciones objetivo (σ²_B, σ²_W y J) para graficarlas en la misma escala.
+varCriterios_plot <- data.frame(
+  level = otsu_fisher_ndvi$levels,
+  sigma_b2 = otsu_fisher_ndvi$sigma_b2 / max(otsu_fisher_ndvi$sigma_b2, na.rm = TRUE),
+  sigma_w2 = otsu_fisher_ndvi$sigma_w2 / max(otsu_fisher_ndvi$sigma_w2, na.rm = TRUE),
+  J = otsu_fisher_ndvi$J / max(otsu_fisher_ndvi$J, na.rm = TRUE)) %>%
+  # Conservar únicamente valores válidos.
+  dplyr::filter(is.finite(sigma_b2), is.finite(sigma_w2), is.finite(J))
+# Graficar el histograma de intensidades NDVI y las funciones objetivo del método de Otsu.
+ggplot() +
+  geom_col(data = NDVI_df2, aes(x = NDVI_bits, y = count_norm), fill = "gray75", color = NA, width = 1) +
+  geom_line(data = varCriterios_plot, aes(x = level, y = sigma_b2, color = "Interclase"), linewidth = 1, 
+            alpha = 0.65) +
+  geom_line(data = varCriterios_plot, aes(x = level, y = sigma_w2, color = "Intraclase"), linewidth = 1, 
+            alpha = 0.65) +
+  geom_line(data = varCriterios_plot, aes(x = level, y = J, color = "Fisher"), linewidth = 1, 
+            alpha = 0.65) +
+  scale_color_manual(values = c("Interclase" = "red", "Intraclase" = "blue", "Fisher" = "darkgreen"),
+                     labels = c("Interclase" = "Varianza\ninterclase (σ²_B)",
+                                "Intraclase" = "Varianza\nintraclase (σ²_W)",
+                                "Fisher"     = "Discriminante\nde Fisher (J)")) +
+  scale_x_continuous(breaks = seq(0, 255, by = 50)) +
+  geom_vline(xintercept = threshold_bits_NDVI, color = "black", linewidth = 0.7, linetype = "dashed") +
+  geom_point(data = varCriterios_plot %>% 
+               dplyr::filter(level == threshold_bits_NDVI), aes(x = level, y = sigma_b2 + 0.004),
+             color = "red", size = 3) +
+  geom_point(data = varCriterios_plot %>% 
+               dplyr::filter(level == threshold_bits_NDVI), aes(x = level, y = sigma_w2),
+             color = "blue", size = 3) +
+  geom_point(data = varCriterios_plot %>% 
+               dplyr::filter(level == threshold_bits_NDVI), aes(x = level, y = J - 0.004),
+             color = "darkgreen", size = 3) +
+  theme_minimal(base_size = 9) +
+  annotate("text", x = threshold_bits_NDVI, y = 0.5, label = "Otsu (t*)", color = "grey10", angle = 90, 
+           vjust = -0.5, size = 3.4) +
+  labs(x = "Intensidad NDVI (bins 0–255)", y = "Normalización",
+       title = "Histograma de intensidades NDVI y funciones objetivo del método de Otsu",
+       color = "Función objetivo") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 9.5),
+        legend.title = element_text(face = "bold"),
+        panel.grid.minor = element_blank())

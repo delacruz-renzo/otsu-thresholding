@@ -29,8 +29,9 @@ El objetivo de este proyecto es desarrollar el método de Otsu aplicado a un ras
 🧪 **Archivo principal**
 
 📓 R Markdown:
-- [`CASO_APLICADO_Analisis_Umbralizacion_Otsu.Rmd`](https://rpubs.com/delacruz-renzo/otsu-thresholding-ndvi)
-
+- <a href="https://rpubs.com/delacruz-renzo/otsu-thresholding-ndvi" target="_blank">
+CASO_APLICADO_Analisis_Umbralizacion_Otsu.Rmd
+</a>
 ---
 
 📊 **Gráfico generado**  

@@ -35,7 +35,7 @@ El objetivo de este proyecto es desarrollar el método de Otsu aplicado a un ras
 
 📦 **Instalación / Uso**
 
-La función puede utilizarse directamente desde este repositorio sin necesidad de descargar los archivos localmente:
+Las funciones pueden utilizarse directamente desde este repositorio sin necesidad de descargar los archivos localmente:
 
 ```r
 source("https://raw.githubusercontent.com/delacruz-renzo/otsu-thresholding/main/R/otsu_threshold_raster.R")
@@ -58,7 +58,6 @@ La figura presentada compara el histograma de intensidades NDVI discretizadas y 
 - Proyecto orientado a teledetección y segmentación de imágenes, con implementación paso a paso del método de Otsu aplicado a NDVI.
 - Se incluye una implementación manual del algoritmo y una comparación con *EBImage* para validar resultados.
 
----
 
 📚 **Desarrollado por Renzo De La Cruz | Remote Sensing & GIS**
 

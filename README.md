@@ -58,9 +58,8 @@ La figura presentada compara el histograma de intensidades NDVI discretizadas y 
 - Proyecto orientado a teledetección y segmentación de imágenes, con implementación paso a paso del método de Otsu aplicado a NDVI.
 - Se incluye una implementación manual del algoritmo y una comparación con *EBImage* para validar resultados.
 
+---
 
 📚 **Desarrollado por Renzo De La Cruz | Remote Sensing & GIS**
 
 🔗 Sígueme en mis Redes Sociales: [linktr.ee/renzo-delacruz](https://www.linkedin.com/in/renzo-delacruz/)
-
----

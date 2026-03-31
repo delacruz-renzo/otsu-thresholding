@@ -1,4 +1,4 @@
-# Umbralización de Otsu (Otsu’s thresholding)
+# Umbralización de Otsu (Otsu's thresholding)
 
 ![R](https://img.shields.io/badge/R-4.4.1-blue?logo=r) ![terra](https://img.shields.io/badge/terra-1.8.60-green) ![sf](https://img.shields.io/badge/sf-1.0.16-brightgreen) ![RStoolbox](https://img.shields.io/badge/RStoolbox-0.3.1-orange) ![ggplot2](https://img.shields.io/badge/ggplot2-3.5.1-blueviolet) ![EBImage](https://img.shields.io/badge/EBImage-4.40.0-yellow)
 
@@ -35,9 +35,11 @@ El objetivo de este proyecto es desarrollar el método de Otsu aplicado a un ras
 
 📦 **Instalación / Uso**
 
-La función puede ser utilizada directamente desde este repositorio sin necesidad de descargar los archivos localmente.
+La función puede utilizarse directamente desde este repositorio sin necesidad de descargar los archivos localmente:
 
-- source("https://raw.githubusercontent.com/delacruz-renzo/otsu-thresholding/COMMIT_HASH/R/otsu_threshold_raster.R")
+```r
+source("https://raw.githubusercontent.com/delacruz-renzo/otsu-thresholding/main/R/otsu_threshold_raster.R")
+```
 
 ---
 

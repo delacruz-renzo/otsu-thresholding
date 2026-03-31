@@ -33,6 +33,14 @@ El objetivo de este proyecto es desarrollar el método de Otsu aplicado a un ras
 
 ---
 
+📦 **Instalación / Uso**
+
+La función puede ser utilizada directamente desde este repositorio sin necesidad de descargar los archivos localmente.
+
+- source("https://raw.githubusercontent.com/delacruz-renzo/otsu-thresholding/COMMIT_HASH/R/otsu_threshold_raster.R")
+
+---
+
 📊 **Gráfico generado**  
 
 La figura presentada compara el histograma de intensidades NDVI discretizadas y funciones objetivo del método de Otsu. El umbral óptimo 𝑡∗ coincide con el máximo de σ²_B y del criterio de Fisher, y con el mínimo de σ²_W, mostrando la equivalencia entre los criterios de optimización.

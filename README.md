@@ -16,7 +16,7 @@ El objetivo de este proyecto es desarrollar el método de Otsu aplicado a un ras
 
 ---
 
-## 📌 **Objetivos del análisis**
+📌 **Objetivos del análisis**
 
 - Preparar los datos satelitales mediante corrección radiométrica, pan-sharpening y cálculo del NDVI.
 - Discretizar el NDVI en niveles de intensidad y analizar su distribución mediante histogramas.
@@ -26,14 +26,14 @@ El objetivo de este proyecto es desarrollar el método de Otsu aplicado a un ras
 
 ---
 
-## 🧪 **Archivo principal**
+🧪 **Archivo principal**
 
 📓 R Markdown:
 - [CASO_APLICADO_Analisis_Umbralizacion_Otsu.Rmd](https://rpubs.com/delacruz-renzo/otsu-thresholding-ndvi)
 
 ---
 
-## 📦 **Instalación / Uso**
+📦 **Instalación / Uso**
 
 La función puede utilizarse directamente desde este repositorio sin necesidad de descargar los archivos localmente:
 
@@ -43,7 +43,7 @@ source("https://raw.githubusercontent.com/delacruz-renzo/otsu-thresholding/main/
 
 ---
 
-## 📊 **Gráfico generado**  
+📊 **Gráfico generado**  
 
 La figura presentada compara el histograma de intensidades NDVI discretizadas y funciones objetivo del método de Otsu. El umbral óptimo 𝑡∗ coincide con el máximo de σ²_B y del criterio de Fisher, y con el mínimo de σ²_W, mostrando la equivalencia entre los criterios de optimización.
 
@@ -53,14 +53,14 @@ La figura presentada compara el histograma de intensidades NDVI discretizadas y 
 
 ---
 
-## 💬 **Notas adicionales**
+💬 **Notas adicionales**
 
 - Proyecto orientado a teledetección y segmentación de imágenes, con implementación paso a paso del método de Otsu aplicado a NDVI.
 - Se incluye una implementación manual del algoritmo y una comparación con *EBImage* para validar resultados.
 
 ---
 
-## 📚 **Desarrollado por Renzo De La Cruz | Remote Sensing & GIS**
+📚 **Desarrollado por Renzo De La Cruz | Remote Sensing & GIS**
 
 🔗 Sígueme en mis Redes Sociales: [linktr.ee/renzo-delacruz](https://www.linkedin.com/in/renzo-delacruz/)
 

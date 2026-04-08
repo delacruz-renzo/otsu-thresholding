@@ -35,9 +35,10 @@ El objetivo de este proyecto es desarrollar el método de Otsu aplicado a un ras
 
 📦 **Instalación / Uso**
 
-Las funciones pueden utilizarse directamente desde este repositorio sin necesidad de descargar los archivos localmente:
+Las funciones pueden utilizarse directamente desde este repositorio sin necesidad de descargar los archivos localmente.
 
 ```r
+# Cargar las funciones desde GitHub
 source("https://raw.githubusercontent.com/delacruz-renzo/otsu-thresholding/main/R/otsu_threshold_raster.R")
 ```
 

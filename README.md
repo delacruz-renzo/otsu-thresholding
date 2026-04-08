@@ -44,6 +44,29 @@ source("https://raw.githubusercontent.com/delacruz-renzo/otsu-thresholding/main/
 
 ---
 
+🚀 **Ejemplo rápido**
+
+```r
+library(terra)
+
+# Importar imagen raster
+r <- rast("ndwi.tif")
+
+# Aplicar algoritmo de umbralización de Otsu
+threshold <- otsu_threshold(r)
+
+# Mostrar salidas
+print(threshold)
+
+# Aplicar binarización
+r_threshold <- r > threshold$threshold_scaled
+
+# Visualizar resultado
+plot(r_threshold)
+```
+
+---
+
 📊 **Gráfico generado**  
 
 La figura presentada compara el histograma de intensidades NDVI discretizadas y funciones objetivo del método de Otsu. El umbral óptimo 𝑡∗ coincide con el máximo de σ²_B y del criterio de Fisher, y con el mínimo de σ²_W, mostrando la equivalencia entre los criterios de optimización.
